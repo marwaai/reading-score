@@ -98,6 +98,5 @@ User uploads a .txt file (e.g. "The cat sat on the mat.")
 
 User clicks Record and reads the text aloud
 
-Django backend receives audio  and chunks by librosa then transcribes each using Whisper-small
-then it send by websocket to the same page
+Django backend receives audio  and chunks by librosa then transcribes each using Whisper-small and send it chunk by chunk to front end as if it streaming.
 Once complete, the final transcript is compared to the .txt  and give transcription with score (precentage of correct char compare to original).
