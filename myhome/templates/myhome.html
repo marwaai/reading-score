@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Audio</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="stylesheet" href="{% static 'css/myhome.css' %}">
+</head>
+<body>
+<div class="container">
+    <h2>Upload or Record Audio</h2>
+
+    <input type="file" id="fileInput" accept=".txt">
+    <pre id="fileContent">File content will appear here...</pre>
+
+    <button id="recordBtn">🔴 Start Recording</button>
+    <button id="stopBtn" disabled>⏹ Stop</button>
+
+    <audio id="player" controls></audio>
+
+    <div id="transcriptionBox">🎤 Transcription will appear here...</div>
+</div>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const fileContent = document.getElementById('fileContent');
+const recordBtn = document.getElementById('recordBtn');
+const stopBtn = document.getElementById('stopBtn');
+const player = document.getElementById('player');
+const transcriptionBox = document.getElementById('transcriptionBox');
+
+// 🧠 WebSocket connection
+const socket = new WebSocket("ws://127.0.0.1:8000/ws/transcribe/");
+
+// 💬 تجميع التفريغ الكامل
+let fullTranscription = "";
+
+socket.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    if (data.text) {
+        transcriptionBox.textContent += `${data.text}\n`;
+        fullTranscription += data.text + " ";
+    } else if (data.done) {
+        transcriptionBox.textContent += "✅ Transcription complete.\n";
+        localStorage.setItem("transcription", fullTranscription.trim());
+        window.location.href = "http://127.0.0.1:8000/home/transcription_result";
+    } else if (data.error) {
+        transcriptionBox.textContent += "❌ Error: " + data.error + "\n";
+    }
+};
+
+fileInput.addEventListener('change', function () {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    if (file.name.endsWith(".txt")) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            fileContent.textContent = e.target.result;
+            localStorage.setItem("original", fileContent.textContent);
+
+        };
+        reader.readAsText(file);
+    } else {
+        fileContent.textContent = "📥 File uploaded. Whisper model will handle transcription.";
+    }
+});
+
+let mediaRecorder;
+let recordedBlob;
+
+recordBtn.onclick = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+
+    let audioChunks = [];
+
+    mediaRecorder.ondataavailable = e => {
+        audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+        recordedBlob = new Blob(audioChunks, { type: "audio/wav" });
+        player.src = URL.createObjectURL(recordedBlob);
+
+        const file = new File([recordedBlob], "recording.wav");
+        const formData = new FormData();
+        formData.append("audio", file);
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const response = await fetch("http://127.0.0.1:8000/home/upload-audio/", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        // 🎯 Send audio path to WebSocket to start transcription
+        if (result.path) {
+            socket.send(JSON.stringify({
+                audio_path:  "upload-audio/uploaded_audio.wav"
+            }));
+        } else {
+            transcriptionBox.textContent = "❌ Upload failed.";
+        }
+    };
+
+    mediaRecorder.start();
+    recordBtn.disabled = true;
+    stopBtn.disabled = false;
+};
+
+stopBtn.onclick = () => {
+    mediaRecorder.stop();
+    recordBtn.disabled = false;
+    stopBtn.disabled = true;
+};
+</script>
+</body>
+</html>

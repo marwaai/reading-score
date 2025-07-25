@@ -1,0 +1,39 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload and Read File</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+</head>
+<body>
+    <div class="container">
+        <h2>Upload a Text or Audio File</h2>
+        <input type="file" id="fileInput" accept=".txt,.wav,.mp3">
+        <pre id="fileContent">File content will appear here...</pre>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileContent = document.getElementById('fileContent');
+
+        fileInput.addEventListener('change', function () {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // If it's a .txt file, preview it directly
+            if (file.name.endsWith(".txt")) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    fileContent.textContent = e.target.result;
+                };
+                reader.readAsText(file);
+            } else {
+                fileContent.textContent = "📥 File uploaded. Whisper model will handle transcription on the server.";
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+        body {
+            font-family: sans-serif;
+            margin: 50px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        input[type="file"] {
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        pre {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 15px;
+            min-height: 200px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border-radius: 5px;
+        }

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transcription Result</title>
+</head>
+<body>
+    <div class="container">
+        <h2>📝 Transcription Result</h2>
+        <pre id="resultBox">Loading...</pre>
+            <div id="score">score </div>
+
+
+    </div>
+
+    <script>
+        const transcription = localStorage.getItem("transcription");
+        const resultBox = document.getElementById("resultBox");
+        const original = localStorage.getItem("original");
+        const score=document.getElementById("score");
+        let cont=0
+        if (transcription) {
+            resultBox.textContent = transcription;
+
+            for (let i=0 ;i<transcription.length;i++)
+    {
+{if (transcription[i]==original[i])
+cont++;
+
+}
+            }
+        } else {
+            resultBox.textContent = "❌ No transcription found.";
+        }
+score.textContent = `score:${(cont*100)/transcription.length}%`;
+;
+
+    </script>
+</body>
+</html>
